@@ -26,4 +26,29 @@ test_expect_success 'colored blame colors contiguous lines via config' '
 	test_line_count = 3 H.expect
 '
 
+test_expect_success 'heated line coloring for old code' '
+	git blame --heated-lines hello.c >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	grep "<BLUE>" <actual >colored &&
+	test_line_count = 10 colored
+'
+
+test_expect_success 'heated line coloring' '
+	cat >>hello.c <<-EOF &&
+		void qfunc();
+	EOF
+	git add hello.c &&
+	GIT_AUTHOR_DATE="" git commit -m "new commit" &&
+
+	git blame --heated-lines hello.c >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+
+	grep "<BLUE>" <actual >colored &&
+	test_line_count = 10 colored &&
+
+	grep "<RED>" <actual >colored &&
+	test_line_count = 1 colored &&
+	grep qfunc colored
+'
+
 test_done
